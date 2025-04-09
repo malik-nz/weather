@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Spinner from "./Spinner";
 
 const App: React.FC = () => {
+  const [weather, setWeather] = useState<string>("default"); // city state
   const [city, setCity] = useState<string>(""); // city state
   const [weatherData, setWeatherData] = useState<any>(null); // weather data state
   const [forecastData, setForecastData] = useState<any>(null); // forecast data state
@@ -56,23 +57,34 @@ const App: React.FC = () => {
       const icon = weatherData.weather[0].icon;
       let glow = "#00d4ff";
       let message = "Enjoy your day!";
-
+      
       if (condition.includes("rain")) {
         glow = "#0fd0ff";
         message = "☔ Don't forget your umbrella!";
+        setWeather("rainy");
+        document.body.style.background = "url(images/rainy.jpeg) no-repeat center center fixed";
       } else if (condition.includes("cloud")) {
         glow = "#aaaaff";
         message = "🌥 A cozy cloudy day!";
+        setWeather("cloudy");
+        document.body.style.background = "url(images/cloudy.jpeg) no-repeat center center fixed";
       } else if (condition.includes("clear")) {
         glow = "#ffe066";
         message = "☀ Sunshine vibes!";
+        setWeather("sunny");
+        document.body.style.background = "url(images/sunny.jpeg) no-repeat center center fixed";
       } else if (condition.includes("snow")) {
         glow = "#d0f0ff";
         message = "❄ Stay warm out there!";
+        setWeather("snowy");
+        document.body.style.background = "url(images/snowy.jpeg) no-repeat center center fixed";
       } else if (temp < 10) {
         glow = "#88cfff";
         message = "🧣 It's chilly! Stay warm.";
+        setWeather("chilly");
+        document.body.style.background = "url(images/cold.jpeg) no-repeat center center fixed";
       }      
+      document.body.style.backgroundSize = 'cover';
       motivationRef.current!.innerHTML = message;
       const root = document.documentElement; // This references the <html> element
       root.style.setProperty('--glow-color', glow); // Set the CSS variable
@@ -112,19 +124,18 @@ const App: React.FC = () => {
     }
   },[weatherData, forecastData]);
 
-
   return (
     <>
     {loading && <div className="loading-overlay show"><Spinner /></div>}
-      <div className="glass-panel">        
-        <div className="glow-orb"></div>
+      <div className="glass-panel">  
+        <div className={`${weather}-weather-orb`}></div>
         <h2>Accurate Weather</h2>
         <div className="input-group city-input">
           <input
             type="text"
             name="city"
             className="form-control"
-            placeholder="Enter city"
+            placeholder="Enter City"
             value={city}
             onChange={(e) => setCity(e.target.value)}
           />
