@@ -1,0 +1,144 @@
+import { useEffect, useRef, useState } from "react";
+import Spinner from "./Spinner";
+
+const App: React.FC = () => {
+  const [city, setCity] = useState<string>(""); // city state
+  const [weatherData, setWeatherData] = useState<any>(null); // weather data state
+  const [forecastData, setForecastData] = useState<any>(null); // forecast data state
+  const [loading, setLoading] = useState<boolean>(false); // loading state
+  const [error, setError] = useState<string>(""); // error state
+
+  const weatherResultRef = useRef<HTMLDivElement | null>(null);
+  const motivationRef = useRef<HTMLDivElement | null>(null);
+  const hourlyForecastRef = useRef<HTMLDivElement | null>(null);
+
+  const getWeather = async () => {
+    if (!city) {
+      setError("Please enter a city.");
+      return;
+    }
+
+    setLoading(true);
+    setError(""); // Clear previous errors
+
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY || "your_api_key_here";
+    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+
+    try {
+      const response = await fetch(currentUrl);
+      const forecastResponse = await fetch(forecastUrl);
+      const data = await response.json();
+      const forecastData = await forecastResponse.json();
+
+      if (data.cod === 200 && forecastData.cod === "200") {
+        setWeatherData(data);
+        setForecastData(forecastData);
+      } else {
+        setError("City not found.");
+        setWeatherData(null);
+        setForecastData(null);
+      }
+    } catch (err:any) {
+      console.log(err)
+      setError("Failed to fetch data.");
+      setWeatherData(null);
+      setForecastData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(()=>{
+    if(weatherData){
+      const condition = weatherData.weather[0].main.toLowerCase();
+      const temp = weatherData.main.temp;
+      const icon = weatherData.weather[0].icon;
+      let glow = "#00d4ff";
+      let message = "Enjoy your day!";
+
+      if (condition.includes("rain")) {
+        glow = "#0fd0ff";
+        message = "☔ Don't forget your umbrella!";
+      } else if (condition.includes("cloud")) {
+        glow = "#aaaaff";
+        message = "🌥 A cozy cloudy day!";
+      } else if (condition.includes("clear")) {
+        glow = "#ffe066";
+        message = "☀ Sunshine vibes!";
+      } else if (condition.includes("snow")) {
+        glow = "#d0f0ff";
+        message = "❄ Stay warm out there!";
+      } else if (temp < 10) {
+        glow = "#88cfff";
+        message = "🧣 It's chilly! Stay warm.";
+      }      
+      motivationRef.current!.innerHTML = message;
+      const root = document.documentElement; // This references the <html> element
+      root.style.setProperty('--glow-color', glow); // Set the CSS variable
+       // Dynamically add flexbox properties
+      const rootElement = document.getElementById('root') as HTMLElement;
+      rootElement.style.setProperty('display', 'flex');
+      rootElement.style.setProperty('flex-direction', 'column');
+      rootElement.style.setProperty('align-items', 'center');
+      weatherResultRef.current!.innerHTML = `
+          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="icon">
+          <h3>${weatherData.name}, ${weatherData.sys.country}</h3>
+          <p>${condition} | ${temp}°C</p>
+        `;
+    }
+
+    if(forecastData){
+      const forecastItems = forecastData.list.slice(0, 10).map((hourData: any) => {
+        const forecastTime = new Date(hourData.dt * 1000);
+        const time = forecastTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        return `
+          <div class="forecast-item">
+            <p><strong>${time}</strong></p>
+            <img src="https://openweathermap.org/img/wn/${hourData.weather[0].icon}.png" alt="icon"/>
+            <p>${Math.round(hourData.main.temp)}°C</p>
+          </div>
+        `;
+      });
+
+      // Safely set innerHTML for the forecast data
+      if (hourlyForecastRef.current) {
+        hourlyForecastRef.current.innerHTML = forecastItems.join('');
+      }
+    }
+  },[weatherData, forecastData]);
+
+
+  return (
+    <>
+    {loading && <div className="loading-overlay show"><Spinner /></div>}
+      <div className="glass-panel">        
+        <div className="glow-orb"></div>
+        <h2>Accurate Weather</h2>
+        <div className="input-group city-input">
+          <input
+            type="text"
+            name="city"
+            className="form-control"
+            placeholder="Enter city"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
+          <button type="button" onClick={getWeather}>
+            Get
+          </button>
+        </div>
+        {error && <p className="text-warning">{error}</p>}
+        <div ref={weatherResultRef} className="weather-data"></div>
+        <div ref={motivationRef} className="motivation"></div>
+      </div>
+      <div ref={hourlyForecastRef} className="forecast-container"></div>
+    </>
+  );
+};
+
+export default App;
