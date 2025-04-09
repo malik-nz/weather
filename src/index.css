@@ -9,6 +9,7 @@
 body {
   margin: 0;
   background: radial-gradient(circle at top, #141e30, #0f0f0f);
+  background-size: cover;
   font-family: 'Segoe UI', sans-serif;
   display: flex;
   flex-direction: column;
@@ -16,7 +17,6 @@ body {
   min-height: 100vh;
   color: #fff;
   padding: 20px;
-  background-size: cover;
 }
 
 .glass-panel {

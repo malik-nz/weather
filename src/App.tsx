@@ -36,6 +36,7 @@ const App: React.FC = () => {
         setWeatherData(data);
         setForecastData(forecastData);
       } else {
+        document.body.style.background = "radial-gradient(circle at top, #141e30, #0f0f0f)";
         setError("City not found.");
         setWeatherData(null);
         setForecastData(null);
@@ -83,7 +84,7 @@ const App: React.FC = () => {
         message = "🧣 It's chilly! Stay warm.";
         setWeather("chilly");
         document.body.style.background = "url(images/cold.jpeg) no-repeat center center fixed";
-      }      
+      }
       document.body.style.backgroundSize = 'cover';
       motivationRef.current!.innerHTML = message;
       const root = document.documentElement; // This references the <html> element
