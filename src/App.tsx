@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Spinner from "./Spinner";
 
 const App: React.FC = () => {
@@ -12,6 +12,39 @@ const App: React.FC = () => {
   const weatherResultRef = useRef<HTMLDivElement | null>(null);
   const motivationRef = useRef<HTMLDivElement | null>(null);
   const hourlyForecastRef = useRef<HTMLDivElement | null>(null);
+  const [client, setClient] = useState<any>(null);
+  const [connection, setConnectStatus] = useState<string | null>(null);
+
+  const mqttConnect = useCallback(() => {
+    const host = 'wss://mqtt.eclipseprojects.io:443/mqtt';
+    const options = {
+      clientId: 'client_' + Math.random().toString(16).substr(2, 8),
+      clean: true,
+      reconnectPeriod: 1000, // ms
+      connectTimeout: 30 * 1000, // 30 seconds
+    };
+    setConnectStatus('Connecting');
+    console.log("window.mqtt", window.mqtt)
+    if (window.mqtt) {
+      setClient(window.mqtt.connect(host, options));
+    }
+  }, []);
+
+  useEffect(mqttConnect, [])
+
+  useEffect(() => {
+    if (client) {
+      client.on('connect', () => {
+        setConnectStatus('Connected');
+        console.log('Connected to broker');
+      });
+
+      client.on('error', (err: any) => {
+        setConnectStatus('Error');
+        console.error('Connection error:', err);
+      });
+    }
+  }, [client]);
 
   const getWeather = async () => {
     if (!city) {
@@ -41,7 +74,7 @@ const App: React.FC = () => {
         setWeatherData(null);
         setForecastData(null);
       }
-    } catch (err:any) {
+    } catch (err: any) {
       console.log(err)
       setError("Failed to fetch data.");
       setWeatherData(null);
@@ -51,14 +84,14 @@ const App: React.FC = () => {
     }
   };
 
-  useEffect(()=>{
-    if(weatherData){
+  useEffect(() => {
+    if (weatherData) {
       const condition = weatherData.weather[0].main.toLowerCase();
       const temp = weatherData.main.temp;
       const icon = weatherData.weather[0].icon;
       let glow = "#00d4ff";
       let message = "Enjoy your day!";
-      
+
       if (condition.includes("rain")) {
         glow = "#0fd0ff";
         message = "☔ Don't forget your umbrella!";
@@ -89,7 +122,7 @@ const App: React.FC = () => {
       motivationRef.current!.innerHTML = message;
       const root = document.documentElement; // This references the <html> element
       root.style.setProperty('--glow-color', glow); // Set the CSS variable
-       // Dynamically add flexbox properties
+      // Dynamically add flexbox properties
       const rootElement = document.getElementById('root') as HTMLElement;
       rootElement.style.setProperty('display', 'flex');
       rootElement.style.setProperty('flex-direction', 'column');
@@ -101,7 +134,7 @@ const App: React.FC = () => {
         `;
     }
 
-    if(forecastData){
+    if (forecastData) {
       const forecastItems = forecastData.list.slice(0, 10).map((hourData: any) => {
         const forecastTime = new Date(hourData.dt * 1000);
         const time = forecastTime.toLocaleTimeString([], {
@@ -123,12 +156,12 @@ const App: React.FC = () => {
         hourlyForecastRef.current.innerHTML = forecastItems.join('');
       }
     }
-  },[weatherData, forecastData]);
+  }, [weatherData, forecastData]);
 
   return (
     <>
-    {loading && <div className="loading-overlay show"><Spinner /></div>}
-      <div className="glass-panel">  
+      {loading && <div className="loading-overlay show"><Spinner /></div>}
+      <div className="glass-panel">
         <div className={`${weather}-weather-orb`}></div>
         <h2>Accurate Weather</h2>
         <div className="input-group city-input">
