@@ -7,6 +7,7 @@ type Weather = {
   city: string;
   temperature: number;
   condition: string;
+  dateTime: string;
 };
 
 const App: React.FC = () => {
@@ -16,15 +17,14 @@ const App: React.FC = () => {
   const [forecastData, setForecastData] = useState<any>(null); // forecast data state
   const [loading, setLoading] = useState<boolean>(false); // loading state
   const [error, setError] = useState<string>(""); // error state
+  const [showHistory, setShowHistory] = useState<boolean>(false); // show history state
 
   const weatherResultRef = useRef<HTMLDivElement | null>(null);
   const motivationRef = useRef<HTMLDivElement | null>(null);
   const hourlyForecastRef = useRef<HTMLDivElement | null>(null);
   const [client, setClient] = useState<any>(null);
   const [connectionStatus, setConnectStatus] = useState<string | null>(null);
-  const [fetchedWeather, setFetchedWeather] = useState<Weather | null>(null);
-
-  console.log("fetchedWeather", fetchedWeather)
+  const [fetchedWeather, setFetchedWeather] = useState<Weather[]>([]);
 
   const mqttConnect = useCallback(() => {
     const host = 'wss://mqtt.eclipseprojects.io:443/mqtt';
@@ -46,12 +46,12 @@ const App: React.FC = () => {
     mqttConnect()
     const fetchWeatherData = async () => {
       const data = await getRecord("weather/iot");
-      setFetchedWeather(data);
+      setFetchedWeather(Object.values(data) || []); // Ensure it's an array
     };
     fetchWeatherData();
 
     const unsubscribe = subscribeToRecord("weather/iot", (data) => {
-      setFetchedWeather(data);
+      setFetchedWeather(Object.values(data) || []); // Ensure it's an array
     });
     return () => {
       unsubscribe(); // Clean up the subscription on component unmount
@@ -100,6 +100,7 @@ const App: React.FC = () => {
             country: data.sys.country,
             temperature: data.main.temp,
             condition: data.weather[0].main,
+            dateTime: new Date().toISOString()
           };
           await addRecord("weather/iot", message);
           client.publish(topic, JSON.stringify(message), { qos: 1, retain: true });
@@ -198,6 +199,27 @@ const App: React.FC = () => {
   return (
     <>
       {loading && <div className="loading-overlay show"><Spinner /></div>}
+      <div className="sidebar position-relative w-100">
+        <div className="sidebar-content position-absolute d-flex justify-content-center align-items-center flex-column">
+          <button className="btn btn-primary sidebar-toggle-btn" onClick={() => setShowHistory(!showHistory)}>
+            ☰ History
+          </button>
+          {showHistory && (
+            <div className="history-list">
+              <ul className="list-group">
+                {fetchedWeather.reverse().map((item, index) => (
+                  <li key={index} className="list-group-item">
+                    <strong>{item.city}, {item.country}</strong>
+                    <div>Temperature: {item.temperature}°C</div>
+                    <div>Condition: {item.condition}</div>
+                    <div>Date: {new Date(item.dateTime).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="glass-panel">
         <div className={`${weather}-weather-orb`}></div>
         <h2>Accurate Weather</h2>
