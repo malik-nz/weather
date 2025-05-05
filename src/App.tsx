@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Spinner from "./Spinner";
+import { addRecord, getRecord, subscribeToRecord } from "./firebase";
+
+type Weather = {
+  country: string;
+  city: string;
+  temperature: number;
+  condition: string;
+};
 
 const App: React.FC = () => {
   const [weather, setWeather] = useState<string>("default"); // city state
@@ -13,7 +21,10 @@ const App: React.FC = () => {
   const motivationRef = useRef<HTMLDivElement | null>(null);
   const hourlyForecastRef = useRef<HTMLDivElement | null>(null);
   const [client, setClient] = useState<any>(null);
-  const [connection, setConnectStatus] = useState<string | null>(null);
+  const [connectionStatus, setConnectStatus] = useState<string | null>(null);
+  const [fetchedWeather, setFetchedWeather] = useState<Weather | null>(null);
+
+  console.log("fetchedWeather", fetchedWeather)
 
   const mqttConnect = useCallback(() => {
     const host = 'wss://mqtt.eclipseprojects.io:443/mqtt';
@@ -30,7 +41,22 @@ const App: React.FC = () => {
     }
   }, []);
 
-  useEffect(mqttConnect, [])
+
+  useEffect(() => {
+    mqttConnect()
+    const fetchWeatherData = async () => {
+      const data = await getRecord("weather/iot");
+      setFetchedWeather(data);
+    };
+    fetchWeatherData();
+
+    const unsubscribe = subscribeToRecord("weather/iot", (data) => {
+      setFetchedWeather(data);
+    });
+    return () => {
+      unsubscribe(); // Clean up the subscription on component unmount
+    };
+  }, [])
 
   useEffect(() => {
     if (client) {
@@ -67,6 +93,17 @@ const App: React.FC = () => {
 
       if (data.cod === 200 && forecastData.cod === "200") {
         setWeatherData(data);
+        if (connectionStatus === 'Connected') {
+          const topic = `weather/iot`;
+          const message = {
+            city: data.name,
+            country: data.sys.country,
+            temperature: data.main.temp,
+            condition: data.weather[0].main,
+          };
+          await addRecord("weather/iot", message);
+          client.publish(topic, JSON.stringify(message), { qos: 1, retain: true });
+        }
         setForecastData(forecastData);
       } else {
         document.body.style.background = "radial-gradient(circle at top, #141e30, #0f0f0f)";
