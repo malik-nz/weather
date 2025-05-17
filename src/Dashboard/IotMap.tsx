@@ -1,29 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { MapContainer, TileLayer, Circle, Popup } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'leaflet/dist/leaflet.css';
-import { getRecord, subscribeToRecord } from '../firebase';
 
-export default function IoTMap() {
+
+export default function IoTMap({ networkData }: any) {
     const [selectedNode, setSelectedNode] = useState(null);
-    const [networkData, setNetworkData] = useState([]);
-    console.log({ networkData })
-    useEffect(() => {
-        const fetchWeatherData = async () => {
-            const data = await getRecord("weather");
-            setNetworkData(Object.values(data) || []); // Ensure it's an array
-        };
-        fetchWeatherData();
-
-        const unsubscribe = subscribeToRecord("weather", (data) => {
-            setNetworkData(Object.values(data) || []); // Ensure it's an array
-        });
-        return () => {
-            unsubscribe(); // Clean up the subscription on component unmount
-        };
-    }, []);
-    
     return (
         <div className="bg-dark min-vh-100  w-100 py-5">
             <motion.div
@@ -40,6 +23,7 @@ export default function IoTMap() {
                             attribution='© <a href="https://carto.com/attributions">CARTO</a>'
                         />
                         {networkData.map((node: any) => {
+                            if (!node.city) return
                             const now: any = new Date();
                             const nodeTime: any = new Date(node.time);
                             const freshness = Math.floor((now - nodeTime) / 1000);
@@ -61,7 +45,7 @@ export default function IoTMap() {
                                         <div>
                                             <h5>{node.city}</h5>
                                             <p><strong>Status:</strong> <span className={freshness <= 120 ? "text-success" : "text-danger"}>{freshness <= 120 ? "Online" : "Offline"}</span></p>
-                                            <p><strong>Sensor ID:</strong> {node.p_id.replace("id_", "")}</p>
+                                            <p><strong>Sensor ID:</strong> {node.p_id ? node.p_id.replace("id_", "") : ""}</p>
                                             <p><strong>Freshness:</strong> {freshness}</p>
                                             <p><strong>Temperature:</strong> {node.temp ?? "N/A"}°C</p>
                                             <p><strong>Humidity:</strong> {node.humidity ?? "N/A"}%</p>

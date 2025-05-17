@@ -188,6 +188,6 @@ body {
   cursor: no-drop;
 }
 
-.leaflet-bottom.leaflet-right{
+.leaflet-bottom.leaflet-right {
   display: none;
 }
