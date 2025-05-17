@@ -159,14 +159,14 @@ body {
   }
 }
 
-.sidebar-toggle-btn {
+.sidebar-toggle-btn{
   position: fixed;
   top: 3%;
   left: 1%;
   z-index: 1000;
 }
 
-.history-list {
+.history-list{
   margin-top: 20%;
 }
 
@@ -178,16 +178,4 @@ body {
 
 .list-group li {
   margin-bottom: 2px;
-}
-
-.color-white {
-  color: #fff;
-}
-
-.cursor-no-drop {
-  cursor: no-drop;
-}
-
-.leaflet-bottom.leaflet-right{
-  display: none;
 }

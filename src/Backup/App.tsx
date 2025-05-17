@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import Spinner from "./Spinner";
-import { addRecord, getRecord, subscribeToRecord } from "./firebase";
+import Spinner from "../Spinner";
+import { addRecord, getRecord, subscribeToRecord } from "../firebase";
 
 type Weather = {
   country: string;
