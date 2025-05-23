@@ -15,9 +15,9 @@ export default function IoTMap({ networkData }: any) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <h3 className="mb-3">IoT Weather</h3>
+                {/* <h3 className="mb-3">IoT Weather</h3> */}
                 <div style={{ height: '575px' }} className="border rounded overflow-hidden">
-                    <MapContainer center={[20, 0]} zoom={3} style={{ height: '100%', width: '100%' }}>
+                    <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
                         <TileLayer
                             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                             attribution='© <a href="https://carto.com/attributions">CARTO</a>'
